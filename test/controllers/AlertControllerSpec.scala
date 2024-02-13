@@ -57,5 +57,64 @@ class AlertControllerSpec extends PlaySpec with GuiceOneAppPerSuite with ScalaFu
       matches.exists(_.alertId.value == "104") mustBe false
 
     }
+
+    "return matches when findMatches method is called and check the language" in {
+      // Stubbing the DefaultApiService response
+      when(mockApiService.getAlerts()).thenReturn(Future.successful(testAlerts))
+      val germanTestQueryTerms = testQueryTerms.map(_.copy(language = "de"))
+      when(mockApiService.getQueryTerms()).thenReturn(Future.successful(germanTestQueryTerms))
+
+      // Calling the method under test
+      val result: Future[Result] = alertController.findMatches().apply(FakeRequest())
+
+      implicit val timeout: Timeout = Timeout(5.seconds)
+
+      val bodyText: String = contentAsString(result)
+      val matches: Seq[Match] = Json.parse(bodyText).as[Seq[Match]]
+
+      matches.length mustBe 0
+
+      matches.exists(_.alertId.value == "101") mustBe false
+      matches.exists(_.alertId.value == "102") mustBe false
+      matches.exists(_.alertId.value == "103") mustBe false
+      matches.exists(_.alertId.value == "104") mustBe false
+
+    }
+    "return matches when findMatches method is called for mutliply terms when keep order is false" in {
+      // Stubbing the DefaultApiService response
+      when(mockApiService.getAlerts()).thenReturn(Future.successful(testAlertsMultiplyTerms))
+      when(mockApiService.getQueryTerms()).thenReturn(Future.successful(testMultiplyTermsQueryTerms))
+
+      // Calling the method under test
+      val result: Future[Result] = alertController.findMatches().apply(FakeRequest())
+
+      implicit val timeout: Timeout = Timeout(5.seconds)
+
+      val bodyText: String = contentAsString(result)
+      val matches: Seq[Match] = Json.parse(bodyText).as[Seq[Match]]
+
+      matches.length mustBe 1
+
+      matches.exists(_.alertId.value == "101") mustBe true
+
+    }
+    "return matches when findMatches method is called for mutliply terms when keep order is true" in {
+      // Stubbing the DefaultApiService response
+      when(mockApiService.getAlerts()).thenReturn(Future.successful(testAlertsMultiplyTerms))
+      when(mockApiService.getQueryTerms()).thenReturn(Future.successful(testMultiplyTermsQueryTerms.map(_.copy(keepOrder = true))))
+
+      // Calling the method under test
+      val result: Future[Result] = alertController.findMatches().apply(FakeRequest())
+
+      implicit val timeout: Timeout = Timeout(5.seconds)
+
+      val bodyText: String = contentAsString(result)
+      val matches: Seq[Match] = Json.parse(bodyText).as[Seq[Match]]
+
+      matches.length mustBe 0
+
+      matches.exists(_.alertId.value == "101") mustBe false
+
+    }
   }
 }

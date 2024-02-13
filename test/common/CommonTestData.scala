@@ -12,6 +12,14 @@ trait CommonTestData {
     QueryTerm(QueryTermId(3), 1, "term3", "en", keepOrder = true)
   )
 
+  val testMultiplyTermsQueryTerms: Seq[QueryTerm] = Seq(
+    QueryTerm(QueryTermId(1), 1, "term1 term2", "en", keepOrder = false)
+  )
+  val testAlertsMultiplyTerms: Seq[Alert] = Seq(
+    Alert(AlertId("101"), Seq(Content("term2 term1", "type1", "en")), LocalDateTime.now().toString, "inputType")
+  )
+
+
   val testAlerts: Seq[Alert] = Seq(
     Alert(AlertId("101"), Seq(Content("Alert with term1", "type1", "en")), LocalDateTime.now().toString, "inputType"),
     Alert(AlertId("102"), Seq(Content("Alert with term2", "type1", "en")), LocalDateTime.now().toString, "inputType"),

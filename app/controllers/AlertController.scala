@@ -19,10 +19,21 @@ class AlertController @Inject()(cc: ControllerComponents,apiS:DefaultApiService)
 
   private def findMatches(alerts:Seq[Alert],queryTerms:Seq[QueryTerm]):Seq[Match] = { // Define a function to check if an alert content contains a query term text
 
-  def isMatch(alert: Alert, queryTerm: QueryTerm): Boolean =
-    alert.contents.exists(_.text.contains(queryTerm.text))
+  def isMatch(alert: Alert, queryTerm: QueryTerm): Boolean = {
+    if (queryTerm.keepOrder) {
+      alert.contents.exists(con => con.text.contains(queryTerm.text) && con.language == queryTerm.language)
+    } else {
+      //check for each bit of text
+      val textAsSeq = queryTerm.text.split(" ").toSeq
+      alert.contents.forall { con =>
+        textAsSeq.forall { queryText =>
+          con.text.contains(queryText) && con.language == queryTerm.language
+        }
+      }
+    }
+  }
 
-  val allMatches = for {
+    val allMatches = for {
     alert <- alerts
     queryTerm <- queryTerms
     if isMatch(alert, queryTerm)

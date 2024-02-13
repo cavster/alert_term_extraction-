@@ -10,6 +10,7 @@ import play.api.libs.json._
 import play.api.libs.ws._
 import entities.formats._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Try, Success, Failure}
 
 trait ApiService {
   def getQueryTerms(): Future[Seq[QueryTerm]]
@@ -40,14 +41,14 @@ class DefaultApiService @Inject()(ws: WSClient)
     ws.url(url).get().flatMap { response =>
       response.status match {
         case 200 =>
-
-          try {
-            Future.successful(response.json.as[T])
-          } catch {
-            case e: JsResultException =>
+          val jsonTry = Try(response.json.as[T])
+          val resultFuture = jsonTry match {
+            case Success(json) => Future.successful(json)
+            case Failure(e) =>
               val errorMessage = s"Failed to parse JSON response from $url: ${e.getMessage}"
               Future.failed(new RuntimeException(errorMessage, e))
           }
+          resultFuture
         case _ =>
           // Handle non-200 responses
           val errorMessage = s"Failed to fetch data from $url: ${response.status} ${response.body}"
